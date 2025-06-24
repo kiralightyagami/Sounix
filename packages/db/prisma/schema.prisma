@@ -1,0 +1,130 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum FileType {
+  audio
+  video
+}
+
+enum TranscriptStatus {
+  pending
+  completed
+  failed
+}
+
+enum VoiceoverStatus {
+  pending
+  completed
+  failed
+}
+
+model User {
+  id           String    @id @default(uuid())
+  clerkUserId  String    @unique
+  email        String?   @unique
+  rooms        Room[]    @relation("CreatorRooms")
+  participants Participant[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Room {
+  id           String        @id @default(uuid())
+  title        String
+  description  String?
+  isLive       Boolean       @default(false)
+  creatorId    String
+  creator      User          @relation("CreatorRooms", fields: [creatorId], references: [id])
+  participants Participant[]
+  recordings   Recording[]
+  livestreams  LivestreamSession[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Participant {
+  id        String   @id @default(uuid())
+  roomId    String
+  userId    String
+  joinedAt  DateTime @default(now())
+  leftAt    DateTime?
+
+  room      Room     @relation(fields: [roomId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+  mediaFiles MediaFile[]
+}
+
+model Recording {
+  id         String     @id @default(uuid())
+  roomId     String
+  startedAt  DateTime
+  stoppedAt  DateTime?
+  createdAt  DateTime   @default(now())
+
+  room       Room       @relation(fields: [roomId], references: [id])
+  mediaFiles MediaFile[]
+}
+
+model MediaFile {
+  id             String     @id @default(uuid())
+  recordingId    String
+  participantId  String
+  fileUrl        String
+  fileType       FileType
+  durationMs     Int?
+  sizeBytes      BigInt?
+  createdAt      DateTime   @default(now())
+
+  recording      Recording  @relation(fields: [recordingId], references: [id])
+  participant    Participant @relation(fields: [participantId], references: [id])
+  transcript     Transcript?
+}
+
+model Transcript {
+  id              String           @id @default(uuid())
+  mediaFileId     String           @unique
+  status          TranscriptStatus @default(pending)
+  language        String?
+  transcriptText  String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  mediaFile       MediaFile        @relation(fields: [mediaFileId], references: [id])
+  voiceOver       VoiceOver?
+}
+
+model VoiceOver {
+  id             String          @id @default(uuid())
+  transcriptId   String          @unique
+  fileUrl        String
+  voiceModel     String
+  status         VoiceoverStatus @default(pending)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  transcript     Transcript      @relation(fields: [transcriptId], references: [id])
+}
+
+model LivestreamSession {
+  id         String   @id @default(uuid())
+  roomId     String
+  rtmpUrl    String
+  startedAt  DateTime
+  stoppedAt  DateTime?
+  createdAt  DateTime @default(now())
+
+  room       Room     @relation(fields: [roomId], references: [id])
+}
