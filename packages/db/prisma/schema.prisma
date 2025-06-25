@@ -91,8 +91,20 @@ model MediaFile {
   recording      Recording  @relation(fields: [recordingId], references: [id])
   participant    Participant @relation(fields: [participantId], references: [id])
   transcript     Transcript?
+  chunks         MediaChunk[]
 }
 
+model MediaChunk {
+  id            String     @id @default(uuid())
+  mediaFileId   String
+  fileUrl       String
+  sequence      Int
+  durationMs    Int?
+  sizeBytes     BigInt?
+  createdAt     DateTime   @default(now())
+
+  mediaFile     MediaFile  @relation(fields: [mediaFileId], references: [id])
+}
 model Transcript {
   id              String           @id @default(uuid())
   mediaFileId     String           @unique
