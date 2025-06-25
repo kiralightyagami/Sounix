@@ -11,10 +11,11 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.835.0",
     "@types/express": "^5.0.3",
     "@types/jsonwebtoken": "^9.0.10",
+    "db": "workspace:*",
     "express": "^5.1.0",
-    "jsonwebtoken": "^9.0.2",
-    "db": "workspace:*"
+    "jsonwebtoken": "^9.0.2"
   }
 }
